@@ -125,6 +125,8 @@ export class HostControlServerSession {
         }, respond)
       } catch (error) {
         if (error instanceof HostControlResponseCorrelationError) throw error
+        // TEMP-DEBUG (REQ-20261010-0013 server diagnosis): surface the uncollapsed wire error.
+        process.stderr.write(`[wire-error] method=${(request as { method?: unknown }).method}: ${error instanceof Error ? (error.stack ?? error.message) : String(error)}\n`)
         respond(this.options.errorResponse(request, error))
       }
       this.assertOpen()
