@@ -124,7 +124,17 @@ export function createWindowsPeerAttestor(options: WindowsPeerAttestorOptions): 
         try { await options.bindings.closeHandle(handle) } catch (error) { failure ??= error }
       }
     }
-    if (failure !== undefined || result === undefined) throw new HostAuthorityError('unauthorized')
+    if (failure !== undefined || result === undefined) {
+      // TEMP-DEBUG (REQ-20261010-0013 peer diagnosis): surface the collapsed attestation failure.
+      try {
+        const { appendFileSync } = await import('node:fs')
+        const { tmpdir } = await import('node:os')
+        const { join } = await import('node:path')
+        appendFileSync(join(tmpdir(), 'dsh-wire-error.log'),
+          `[peer-attest] failure=${failure instanceof Error ? (failure.stack ?? failure.message) : String(failure)}\n`)
+      } catch { /* diagnosis must never change control flow */ }
+      throw new HostAuthorityError('unauthorized')
+    }
     return result
   }
 }
