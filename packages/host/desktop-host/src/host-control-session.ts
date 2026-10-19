@@ -1,3 +1,6 @@
+import { appendFileSync } from 'node:fs'
+import { tmpdir } from 'node:os'
+import { join } from 'node:path'
 import type {
   HostAuthorizedParams,
   HostControlFrame,
@@ -126,7 +129,11 @@ export class HostControlServerSession {
       } catch (error) {
         if (error instanceof HostControlResponseCorrelationError) throw error
         // TEMP-DEBUG (REQ-20261010-0013 server diagnosis): surface the uncollapsed wire error.
-        process.stderr.write(`[wire-error] method=${(request as { method?: unknown }).method}: ${error instanceof Error ? (error.stack ?? error.message) : String(error)}\n`)
+        const detail = `[wire-error] method=${(request as { method?: unknown }).method}: ${error instanceof Error ? (error.stack ?? error.message) : String(error)}\n`
+        process.stderr.write(detail)
+        try {
+          appendFileSync(join(tmpdir(), 'dsh-wire-error.log'), detail)
+        } catch { /* diagnosis must never change control flow */ }
         respond(this.options.errorResponse(request, error))
       }
       this.assertOpen()
