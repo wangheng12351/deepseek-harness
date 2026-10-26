@@ -71,7 +71,12 @@ export class HostAuthorityError extends Error {
     readonly code: HostAuthorityErrorCode,
     readonly diagnosticReason?: string,
   ) {
-    super(`DSH Host authority rejected operation: ${code}`)
+    // REQ-20261026-0023 diagnostic build: keep a bounded throw site so a Worker rejection can be
+    // traced to one guard without shipping a full stack across the control protocol.
+    const frames = String(new Error().stack ?? '').split(String.fromCharCode(10)).slice(2, 4).map(line => line.trim())
+    const origin = frames.join(' <= ').slice(0, 240)
+    super(`DSH Host authority rejected operation: ${code}${origin ? ` [${origin}]` : ''}`)
+    this.diagnosticReason = diagnosticReason ?? origin
     this.name = 'HostAuthorityError'
   }
 }

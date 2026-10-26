@@ -123,6 +123,8 @@ export class WindowsHostCarrier {
   /** Own a post-start Worker failure: report it once and immediately begin bounded shutdown. */
   notifyWorkerFailure(error: Error): void {
     if (this.workerFailure !== undefined) return
+    // REQ-20261026-0023 diagnostic build: surface the Worker failure origin to the embedding log.
+    console.error(`[dsh-host] worker failure: ${error.message}`)
     this.workerFailure = error
     try { this.onFailure?.(error) } catch { /* reporting cannot prevent shutdown */ }
     void this.close().catch(() => undefined)
