@@ -103,6 +103,8 @@ export function startWindowsHostWorkerThread(
     else rejectDone(error)
   }
   const onError: WorkerListener = (error) => {
+    // REQ-20261026-0023 diagnostic build: the supervisor message hides the worker error itself.
+    console.error(`[dsh-host] worker thread error: ${(error as Error)?.stack ?? String(error)}`)
     workerFailure ??= asError(error)
     supervisorRef.current?.notifyWorkerFailure(workerFailure)
   }
